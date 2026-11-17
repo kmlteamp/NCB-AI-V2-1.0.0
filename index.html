@@ -3,339 +3,309 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NCB AI_SOS 1.0</title>
+<title>NCB AI SUPPORT</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: #0f0f12; color: #e6e6e6;
-    height: 100vh; display: flex; flex-direction: column;
-  }
-
-  /* ===== MÀN HÌNH PIN ===== */
-  #pinGate {
-    position: fixed; inset: 0; background: #0f0f12;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 100; padding: 24px; text-align: center;
-  }
-  #pinGate h2 { font-size: 20px; color: #f55036; margin-bottom: 8px; }
-  #pinGate p { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; max-width: 340px; }
-  #pinInput {
-    width: 220px; text-align: center; font-size: 28px; letter-spacing: 12px;
-    padding: 12px; background: #17171c; border: 1px solid #333;
-    border-radius: 8px; color: #e6e6e6; outline: none; font-family: monospace;
-  }
-  #pinInput:focus { border-color: #f55036; }
-  #pinBtn {
-    margin-top: 16px; padding: 12px 32px; background: #f55036; color: #fff;
-    border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
-  }
-  #pinBtn:hover { background: #d63e26; }
-  #pinMsg { margin-top: 14px; font-size: 13px; min-height: 20px; color: #ff9b9b; }
-
-  /* ===== HEADER ===== */
-  header {
-    padding: 12px 20px; background: #17171c;
-    border-bottom: 1px solid #2a2a33;
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 10px;
-  }
-  .brand { display: flex; flex-direction: column; gap: 2px; }
-  .brand h1 { font-size: 16px; font-weight: 700; color: #f55036; letter-spacing: 0.5px; }
-  .brand span { font-size: 11px; color: #777; }
-  .brand span a { color: #8ab4f8; text-decoration: none; }
-  .brand span a:hover { text-decoration: underline; }
-  .header-controls { display: flex; gap: 8px; align-items: center; }
-  .hbtn {
-    background: transparent; border: 1px solid #444; color: #bbb;
-    padding: 6px 12px; border-radius: 6px; cursor: pointer;
-    font-size: 13px; font-family: inherit;
-  }
-  .hbtn:hover { border-color: #f55036; color: #f55036; }
-
-  /* ===== CHAT ===== */
-  #chat {
-    flex: 1; overflow-y: auto; padding: 20px;
-    display: flex; flex-direction: column; gap: 12px;
-  }
-  .msg {
-    max-width: 80%; padding: 12px 16px; border-radius: 12px;
-    line-height: 1.6; font-size: 14px; white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-  .user { align-self: flex-end; background: #1f3a5f; color: #dbeafe; border-bottom-right-radius: 3px; }
-  .bot  { align-self: flex-start; background: #1e1e26; border-bottom-left-radius: 3px; }
-  .error { align-self: flex-start; background: #3a1f1f; color: #ff9b9b; border-bottom-left-radius: 3px; }
-  .typing { color: #888; font-style: italic; font-size: 13px; }
-  .speak-btn {
-    background: transparent; border: 1px solid #3a3a44; color: #f55036;
-    border-radius: 4px; padding: 3px 8px; font-size: 11px;
-    cursor: pointer; margin-top: 8px;
-  }
-  .speak-btn:hover { background: #2a2a33; }
-
-  /* ===== INPUT BAR ===== */
-  #inputBar {
-    display: flex; gap: 10px; padding: 14px 20px;
-    background: #17171c; border-top: 1px solid #2a2a33;
-    align-items: flex-end;
-  }
-  #moodSelect {
-    padding: 12px 10px; background: #0f0f12; border: 1px solid #333;
-    border-radius: 8px; color: #e6e6e6; font-size: 14px;
-    outline: none; cursor: pointer; min-width: 110px; font-family: inherit;
-  }
-  #moodSelect:focus { border-color: #f55036; }
-  #input {
-    flex: 1; padding: 12px 14px; background: #0f0f12;
-    border: 1px solid #333; border-radius: 8px; color: #e6e6e6;
-    font-size: 14px; font-family: inherit; resize: none; outline: none;
-    min-height: 44px; max-height: 140px;
-  }
-  #input:focus { border-color: #f55036; }
-  #sendBtn {
-    padding: 0 22px; height: 44px; background: #f55036; color: #fff;
-    border: none; border-radius: 8px; font-weight: 600;
-    cursor: pointer; font-family: inherit;
-  }
-  #sendBtn:disabled { background: #444; color: #888; cursor: not-allowed; }
-
-  footer {
-    padding: 8px 20px; text-align: center; font-size: 11px;
-    color: #555; background: #0f0f12; border-top: 1px solid #1e1e26;
-  }
-  footer a { color: #8ab4f8; text-decoration: none; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#00d9ff}
+body{background:#070b14;color:white;font-family:Arial,sans-serif;padding:14px;}
+header{
+ display:flex;justify-content:space-between;
+ align-items:center;padding:15px;
+ background:#101c2d;border:1px solid #21465e;
+ border-radius:15px;position:sticky;top:5px;z-index:10;
+}
+.logo{font-size:21px;font-weight:bold;color:var(--blue)}
+.menu-btn{
+ background:#102e43;color:white;
+ border:1px solid var(--blue);
+ padding:10px 14px;border-radius:9px;cursor:pointer;
+}
+.menu{
+ display:none;background:#101c2d;
+ border:1px solid #21465e;
+ border-radius:12px;margin-top:10px;padding:10px;
+}
+.menu a{
+ display:block;padding:13px;color:white;
+ text-decoration:none;border-bottom:1px solid #26394c;
+}
+.hero{text-align:center;padding:35px 5px}
+.hero h1{color:var(--blue);font-size:28px}
+.hero p{color:#91a8bd;font-size:13px;line-height:1.8;margin-top:10px}
+.section-title{color:var(--blue);font-size:17px;margin:25px 0 13px;}
+.card{
+ background:linear-gradient(145deg,#142237,#0a1320);
+ border:1px solid #24445c;border-radius:17px;
+ overflow:hidden;margin-bottom:17px;
+ box-shadow:0 5px 22px #0005;
+}
+.banner{width:100%;height:180px;object-fit:cover;display:block;}
+.content{padding:17px}
+.tag{
+ display:inline-block;padding:6px 10px;
+ border-radius:20px;font-size:10px;
+ font-weight:bold;margin-bottom:10px;
+}
+.green{background:#123d2b;color:#65ffad}
+.orange{background:#493018;color:#ffc078}
+.purple{background:#39214f;color:#d7aaff}
+h3{font-size:16px;margin-bottom:10px}
+p.desc{color:#a7b8c9;font-size:13px;line-height:1.8}
+.date{font-size:11px;color:#7790a5;margin-top:12px}
+.btn{
+ width:100%;display:block;padding:13px;
+ text-align:center;text-decoration:none;
+ border:0;border-radius:10px;
+ font-weight:bold;cursor:pointer;margin-top:12px;
+}
+.primary{background:linear-gradient(90deg,#0085b5,#00d9ff);color:#00131b;}
+.secondary{background:#132b40;color:white;border:1px solid #28617c;}
+.reminder.active{background:linear-gradient(90deg,#155a3a,#25c978);color:white;}
+.status{font-size:12px;color:#72dff5;margin-top:12px;text-align:center;line-height:1.6;}
+.chat{
+ height:320px;overflow-y:auto;
+ background:#080f1b;padding:12px;border-radius:12px;
+}
+.msg{
+ padding:11px;border-radius:11px;
+ margin-bottom:10px;font-size:13px;line-height:1.6;
+ max-width:90%;white-space:pre-wrap;word-wrap:break-word;
+}
+.bot{background:#183047;color:#d8f5ff}
+.user{background:#00698d;margin-left:auto}
+.error{background:#3a1414;color:#ff9b9b}
+.typing{background:#183047;color:#72dff5;font-style:italic}
+.input-row{display:flex;gap:8px;margin-top:10px}
+.input-row input{
+ flex:1;min-width:0;padding:13px;
+ background:#091421;color:white;
+ border:1px solid #29465e;border-radius:10px;
+ outline:none;
+}
+.input-row input:focus{border-color:var(--blue)}
+.input-row button{
+ background:var(--blue);border:0;
+ padding:0 15px;border-radius:10px;font-weight:bold;
+ cursor:pointer;color:#00131b;
+}
+.input-row button:disabled{background:#3a4a55;color:#889;cursor:not-allowed}
+footer{text-align:center;color:#70849a;padding:25px 5px;font-size:12px;line-height:1.8;}
 </style>
 </head>
 <body>
 
-<!-- ===== MÀN HÌNH PIN ===== -->
-<div id="pinGate">
-  <h2>NCB AI_SOS 1.0</h2>
-  <p>Nhập mã PIN 6 chữ số để bảo vệ cuộc trò chuyện.<br>
-     Lần đầu: nhập 6 số để đặt PIN.<br>
-     Lần sau: nhập đúng PIN để khôi phục trò chuyện.</p>
-  <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Nhập PIN...">
-  <button id="pinBtn">Tiếp tục</button>
-  <div id="pinMsg"></div>
-</div>
-
-<!-- ===== GIAO DIỆN CHÍNH ===== -->
 <header>
-  <div class="brand">
-    <h1>NCB AI_SOS 1.0</h1>
-    <span>Admin: Nguyễn Công Bằng · <a href="https://ncb-ai.vercel.app/" target="_blank" rel="noopener">ncb-ai.vercel.app</a></span>
-  </div>
-  <div class="header-controls">
-    <button class="hbtn" id="changePinBtn">Đổi PIN</button>
-    <button class="hbtn" id="clearBtn">Xóa chat</button>
-  </div>
+ <div class="logo">✦ NCB AI</div>
+ <button class="menu-btn" onclick="toggleMenu()">☰ MENU</button>
 </header>
 
-<div id="chat"></div>
+<nav class="menu" id="menu">
+ <a href="#home">⌂ TRANG CHỦ</a>
+ <a href="#update">🔔 UPDATE WEBSITE CHÍNH</a>
+ <a href="#upcoming">🚀 CẬP NHẬT SẮP TỚI</a>
+ <a href="#event">🎉 EVENT</a>
+ <a href="#chat">🤖 TRỢ LÝ AI</a>
+ <a href="#official">🌐 WEBSITE CHÍNH</a>
+</nav>
 
-<div id="inputBar">
-  <select id="moodSelect" title="Chọn phong cách trả lời">
-    <option value="Mặc định">Mặc định</option>
-    <option value="Thân thiện">Thân thiện</option>
-    <option value="Chuyên nghiệp">Chuyên nghiệp</option>
-    <option value="Hài hước">Hài hước</option>
-    <option value="Ngắn gọn">Ngắn gọn</option>
-  </select>
-  <textarea id="input" rows="1" placeholder="Nhập tin nhắn... (Enter gửi, Shift+Enter xuống dòng)"></textarea>
-  <button id="sendBtn">Gửi</button>
+<section class="hero" id="home">
+ <h1>NCB AI SUPPORT</h1>
+ <p>TRUNG TÂM THÔNG BÁO & HỖ TRỢ WEBSITE CHÍNH</p>
+ <p>Chào mừng bạn đến với hệ thống NCB AI.</p>
+</section>
+
+<h2 class="section-title" id="update">🔔 THÔNG BÁO UPDATE WEBSITE CHÍNH</h2>
+
+<div class="card">
+ <img class="banner" src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900" alt="Website update">
+ <div class="content">
+  <span class="tag green">● UPDATE MỚI</span>
+  <h3>🌐 NCB AI WEBSITE UPDATE</h3>
+  <p class="desc">Website chính thức NCB AI có thông báo cập nhật mới. Hãy bật nhắc nhở để không bỏ lỡ thông tin quan trọng.</p>
+  <div class="date">📅 18/11/2026</div>
+  <button class="btn primary reminder" id="reminderBtn" onclick="toggleReminder()">🔔 BẬT NHẮC NHỞ</button>
+  <div class="status" id="reminderStatus">Bạn chưa bật nhắc nhở.</div>
+  <a class="btn secondary" href="https://ncb-ai.vercel.app/" target="_blank">XEM WEBSITE CHÍNH →</a>
+ </div>
 </div>
 
-<footer>NCB AI_SOS 1.0 · Admin Nguyễn Công Bằng · Hỗ trợ: <a href="https://ncb-ai.vercel.app/" target="_blank" rel="noopener">https://ncb-ai.vercel.app/</a></footer>
+<h2 class="section-title" id="upcoming">🚀 BẢN CẬP NHẬT SẮP TỚI</h2>
+
+<div class="card">
+ <img class="banner" src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=900" alt="Upcoming update">
+ <div class="content">
+  <span class="tag orange">COMING SOON</span>
+  <h3>⚡ NCB AI VERSION 2.0</h3>
+  <p class="desc">
+   • Nâng cấp giao diện website<br>
+   • Cải tiến hệ thống AI<br>
+   • Tối ưu tốc độ tải trang<br>
+   • Bổ sung tính năng mới<br>
+   • Cải thiện trải nghiệm người dùng
+  </p>
+  <div class="date">📅 Ngày phát hành: Chưa công bố</div>
+  <button class="btn primary" onclick="toggleReminder()">🔔 NHẮC TÔI KHI CẬP NHẬT</button>
+ </div>
+</div>
+
+<h2 class="section-title" id="event">🎉 EVENT & QUÀ TẶNG</h2>
+
+<div class="card">
+ <img class="banner" src="https://images.unsplash.com/photo-1531058020387-3be344556be6?w=900" alt="Event">
+ <div class="content">
+  <span class="tag purple">EVENT</span>
+  <h3>🎁 SỰ KIỆN ĐẶC BIỆT NCB AI</h3>
+  <p class="desc">Thông tin sự kiện, chương trình quà tặng và hoạt động đặc biệt sẽ được cập nhật tại đây.</p>
+  <div class="date">📅 Thời gian: Sắp công bố</div>
+  <button class="btn secondary" onclick="toggleReminder()">🔔 NHẬN THÔNG BÁO EVENT</button>
+ </div>
+</div>
+
+<h2 class="section-title" id="chat">🤖 NCB AI ASSISTANT</h2>
+
+<div class="card">
+ <div class="content">
+  <div class="chat" id="chatBox">
+   <div class="msg bot">Xin chào! 👋<br>Tôi là NCB AI Support. Bạn cần hỗ trợ gì?</div>
+  </div>
+  <div class="input-row">
+   <input id="message" placeholder="Nhập câu hỏi..." onkeydown="if(event.key==='Enter')sendMessage()">
+   <button id="sendBtn" onclick="sendMessage()">GỬI</button>
+  </div>
+  <p class="date">* Đã kết nối AI thật (Llama 3.3 70B qua Groq).</p>
+ </div>
+</div>
+
+<h2 class="section-title" id="official">🌐 WEBSITE CHÍNH THỨC</h2>
+
+<div class="card">
+ <div class="content">
+  <h3>✦ NCB AI OFFICIAL</h3>
+  <p class="desc">Truy cập website chính thức của NCB AI.</p>
+  <a class="btn primary" href="https://ncb-ai.vercel.app/" target="_blank">TRUY CẬP WEBSITE CHÍNH →</a>
+ </div>
+</div>
+
+<footer>
+ <b style="color:#00d9ff">✦ NCB AI SUPPORT</b><br>
+ WEBSITE ASSISTANT SYSTEM<br>
+ © 2026 NCB AI. ALL RIGHTS RESERVED.
+</footer>
 
 <script>
-/* ================== CẤU HÌNH ================== */
-const API_KEY = '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'.trim();
-const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL   = 'llama-3.3-70b-versatile';
-const SYSTEM  = 'Bạn là NCB AI_SOS 1.0, trợ lý AI của anh Nguyễn Công Bằng (admin website https://ncb-ai.vercel.app/). Trả lời bằng tiếng Việt, ngắn gọn, chính xác, thân thiện. Nếu được hỏi về website, hãy giới thiệu NCB AI_SOS 1.0 và liên kết https://ncb-ai.vercel.app/.';
-
-/* ================== PIN GATE ================== */
-const PIN_KEY = 'ncb_ai_pin';
-const CHAT_KEY = 'ncb_ai_chat';
-const pinGate = document.getElementById('pinGate');
-const pinInput = document.getElementById('pinInput');
-const pinBtn = document.getElementById('pinBtn');
-const pinMsg = document.getElementById('pinMsg');
-
-function getStoredPin() {
-  return localStorage.getItem(PIN_KEY);
+/* ========== MENU ========== */
+function toggleMenu(){
+ const menu=document.getElementById("menu");
+ menu.style.display=menu.style.display==="block"?"none":"block";
 }
-function setPinMsg(t, ok=false) {
-  pinMsg.textContent = t;
-  pinMsg.style.color = ok ? '#8ab4f8' : '#ff9b9b';
-}
-pinBtn.addEventListener('click', () => {
-  const v = pinInput.value.trim();
-  if (!/^\d{6}$/.test(v)) { setPinMsg('PIN phải gồm đúng 6 chữ số.'); return; }
-  const stored = getStoredPin();
-  if (!stored) {
-    localStorage.setItem(PIN_KEY, v);
-    setPinMsg('Đã đặt PIN thành công. Đang mở...', true);
-    setTimeout(openChat, 500);
-  } else {
-    if (v === stored) {
-      setPinMsg('PIN đúng. Đang mở...', true);
-      setTimeout(openChat, 300);
-    } else {
-      setPinMsg('PIN sai. Thử lại.');
-      pinInput.value = '';
-    }
-  }
+document.querySelectorAll(".menu a").forEach(a=>{
+ a.addEventListener("click",()=>{document.getElementById("menu").style.display="none";});
 });
-pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') pinBtn.click(); });
 
-function openChat() {
-  pinGate.style.display = 'none';
-  loadChat();
+/* ========== REMINDER ========== */
+let reminderEnabled=localStorage.getItem("ncb_reminder")==="on";
+function updateReminderUI(){
+ const btn=document.getElementById("reminderBtn");
+ const status=document.getElementById("reminderStatus");
+ btn.textContent=reminderEnabled?"✓ ĐÃ BẬT NHẮC NHỞ":"🔔 BẬT NHẮC NHỞ";
+ btn.classList.toggle("active",reminderEnabled);
+ status.textContent=reminderEnabled
+  ?"✓ Đã lưu lựa chọn nhắc nhở trên thiết bị."
+  :"Bạn chưa bật nhắc nhở.";
+}
+async function toggleReminder(){
+ if(!reminderEnabled){
+  if(!("Notification" in window)){alert("Trình duyệt không hỗ trợ thông báo.");return;}
+  if(Notification.permission==="denied"){alert("Bạn đã chặn thông báo. Hãy bật quyền trong cài đặt trình duyệt.");return;}
+  if(Notification.permission!=="granted"){
+   const p=await Notification.requestPermission();
+   if(p!=="granted"){alert("Bạn chưa cấp quyền thông báo.");return;}
+  }
+  reminderEnabled=true;
+  localStorage.setItem("ncb_reminder","on");
+  new Notification("NCB AI SUPPORT",{
+   body:"Bạn đã bật quyền nhận thông báo cập nhật!",
+   icon:"https://cdn-icons-png.flaticon.com/512/1827/1827370.png"
+  });
+ }else{
+  reminderEnabled=false;
+  localStorage.removeItem("ncb_reminder");
+ }
+ updateReminderUI();
+}
+updateReminderUI();
+
+/* ========== CHAT AI THẬT (GROQ) ========== */
+const API_KEY  = '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'.trim();
+const API_URL  = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL    = 'llama-3.3-70b-versatile';
+const SYSTEM   = 'Bạn là NCB AI Support, trợ lý AI của website https://ncb-ai.vercel.app/ (admin: Nguyễn Công Bằng). Trả lời bằng tiếng Việt, ngắn gọn, thân thiện, đúng trọng tâm. Nếu được hỏi về website, giới thiệu NCB AI Support và link https://ncb-ai.vercel.app/.';
+
+const chatBox = document.getElementById("chatBox");
+const inputEl = document.getElementById("message");
+const sendBtn = document.getElementById("sendBtn");
+
+// Lịch sử hội thoại gửi kèm API (không lưu localStorage để giữ đơn giản)
+const history = [];
+
+function appendMsg(text, role){
+ const d=document.createElement("div");
+ d.className="msg "+role;
+ d.textContent=text;
+ chatBox.appendChild(d);
+ chatBox.scrollTop=chatBox.scrollHeight;
+ return d;
+}
+
+async function sendMessage(){
+ const value=inputEl.value.trim();
+ if(!value)return;
+
+ inputEl.value="";
+ sendBtn.disabled=true;
+
+ appendMsg(value,"user");
+ history.push({role:"user",content:value});
+
+ const typing=appendMsg("NCB AI đang trả lời...","typing");
+
+ try{
+  const res=await fetch(API_URL,{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json",
+    "Authorization":"Bearer "+API_KEY
+   },
+   body:JSON.stringify({
+    model:MODEL,
+    messages:[{role:"system",content:SYSTEM},...history],
+    temperature:0.7,
+    max_tokens:1024
+   })
+  });
+
+  const raw=await res.text();
+  if(!res.ok) throw new Error("HTTP "+res.status+" → "+raw.slice(0,300));
+
+  let data;
+  try{data=JSON.parse(raw);}catch{throw new Error("Phản hồi không phải JSON: "+raw.slice(0,150));}
+
+  const reply=data?.choices?.[0]?.message?.content?.trim();
+  if(!reply) throw new Error("Không có nội dung trả về.");
+
+  typing.remove();
+  history.push({role:"assistant",content:reply});
+  appendMsg(reply,"bot");
+
+ }catch(e){
+  typing.remove();
+  appendMsg("Lỗi: "+e.message,"error");
+  history.pop();
+ }finally{
+  sendBtn.disabled=false;
   inputEl.focus();
+ }
 }
-
-/* ================== CHAT ================== */
-const chatEl   = document.getElementById('chat');
-const inputEl  = document.getElementById('input');
-const sendBtn  = document.getElementById('sendBtn');
-const clearBtn = document.getElementById('clearBtn');
-const changePinBtn = document.getElementById('changePinBtn');
-const moodSelect = document.getElementById('moodSelect');
-
-let chatHistory = [];
-
-function saveChat() {
-  try { localStorage.setItem(CHAT_KEY, JSON.stringify(chatHistory)); } catch {}
-}
-function loadChat() {
-  try {
-    const raw = localStorage.getItem(CHAT_KEY);
-    if (raw) {
-      chatHistory = JSON.parse(raw) || [];
-      chatHistory.forEach(m => addMsg(m.content, m.role === 'user' ? 'user' : 'bot', m.role === 'assistant'));
-      return;
-    }
-  } catch {}
-  addMsg('Xin chào! Tôi là NCB AI_SOS 1.0 — trợ lý AI của anh Nguyễn Công Bằng. Hãy nhập câu hỏi.', 'bot', true);
-}
-
-function addMsg(text, role, speech=false) {
-  const d = document.createElement('div');
-  d.className = 'msg ' + role;
-  d.textContent = text;
-  if (role === 'bot' && speech) {
-    const b = document.createElement('button');
-    b.className = 'speak-btn';
-    b.textContent = '🔊 Đọc';
-    b.onclick = () => speak(text);
-    d.appendChild(document.createElement('br'));
-    d.appendChild(b);
-  }
-  chatEl.appendChild(d);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  return d;
-}
-
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'vi-VN';
-  const v = speechSynthesis.getVoices().find(x => x.lang.startsWith('vi'));
-  if (v) u.voice = v;
-  speechSynthesis.speak(u);
-}
-
-async function send() {
-  const text = inputEl.value.trim();
-  if (!text) return;
-  inputEl.value = '';
-  inputEl.style.height = 'auto';
-  sendBtn.disabled = true;
-
-  addMsg(text, 'user');
-  const typing = document.createElement('div');
-  typing.className = 'msg bot typing';
-  typing.textContent = 'NCB AI_SOS 1.0 đang trả lời...';
-  chatEl.appendChild(typing);
-  chatEl.scrollTop = chatEl.scrollHeight;
-
-  chatHistory.push({ role: 'user', content: text });
-  saveChat();
-
-  try {
-    const mood = moodSelect.value;
-    let systemPrompt = SYSTEM;
-    if (mood && mood !== 'Mặc định') systemPrompt += ` Hãy trả lời với phong cách ${mood.toLowerCase()}.`;
-
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + API_KEY
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: 'system', content: systemPrompt }, ...chatHistory],
-        temperature: 0.7,
-        max_tokens: 2048
-      })
-    });
-
-    const raw = await res.text();
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' → ' + raw.slice(0, 400));
-
-    let data;
-    try { data = JSON.parse(raw); } catch { throw new Error('Phản hồi không phải JSON: ' + raw.slice(0, 200)); }
-
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error('Không có nội dung trả về.');
-
-    typing.remove();
-    chatHistory.push({ role: 'assistant', content: reply });
-    saveChat();
-    addMsg(reply, 'bot', true);
-
-  } catch (e) {
-    typing.remove();
-    addMsg('Lỗi: ' + e.message, 'error');
-    chatHistory.pop();
-    saveChat();
-  } finally {
-    sendBtn.disabled = false;
-    inputEl.focus();
-  }
-}
-
-sendBtn.onclick = send;
-inputEl.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-});
-inputEl.addEventListener('input', () => {
-  inputEl.style.height = 'auto';
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
-});
-
-clearBtn.onclick = () => {
-  if (!confirm('Xóa toàn bộ hội thoại?')) return;
-  chatHistory = [];
-  localStorage.removeItem(CHAT_KEY);
-  chatEl.innerHTML = '';
-  addMsg('Hội thoại đã được xóa. Bắt đầu cuộc trò chuyện mới.', 'bot');
-};
-
-changePinBtn.onclick = () => {
-  const oldPin = prompt('Nhập PIN hiện tại:');
-  if (oldPin !== getStoredPin()) { alert('PIN hiện tại không đúng.'); return; }
-  const newPin = prompt('Nhập PIN mới (6 chữ số):');
-  if (!/^\d{6}$/.test(newPin || '')) { alert('PIN mới phải gồm đúng 6 chữ số.'); return; }
-  localStorage.setItem(PIN_KEY, newPin);
-  alert('Đã đổi PIN thành công.');
-};
-
-if ('speechSynthesis' in window) speechSynthesis.getVoices();
 </script>
 </body>
 </html>
