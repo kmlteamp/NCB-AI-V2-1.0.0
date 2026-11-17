@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!-- Chatbot gọi Gemini API trực tiếp từ trình duyệt.
+     LƯU Ý: endpoint đúng là generativelanguage.googleapis.com,
+     KHÔNG phải googleapis.com như đoạn code mẫu (đoạn mẫu sai host). -->
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Chatbot</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: #0f0f12;
+            color: #e6e6e6;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            padding: 14px 20px;
+            background: #17171c;
+            border-bottom: 1px solid #2a2a33;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-size: 16px; font-weight: 600; color: #8ab4f8; }
+        #clearBtn {
+            background: transparent;
+            border: 1px solid #444;
+            color: #bbb;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #clearBtn:hover { border-color: #8ab4f8; color: #8ab4f8; }
+
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .user {
+            align-self: flex-end;
+            background: #1f3a5f;
+            color: #dbeafe;
+            border-bottom-right-radius: 3px;
+        }
+        .bot {
+            align-self: flex-start;
+            background: #1e1e26;
+            color: #e6e6e6;
+            border-bottom-left-radius: 3px;
+        }
+        .error {
+            align-self: flex-start;
+            background: #3a1f1f;
+            color: #ff9b9b;
+            border-bottom-left-radius: 3px;
+        }
+        .typing { color: #888; font-style: italic; font-size: 13px; }
+
+        #inputBar {
+            display: flex;
+            gap: 10px;
+            padding: 14px 20px;
+            background: #17171c;
+            border-top: 1px solid #2a2a33;
+        }
+        #input {
+            flex: 1;
+            padding: 12px 14px;
+            background: #0f0f12;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e6e6e6;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+        }
+        #input:focus { border-color: #8ab4f8; }
+        #sendBtn {
+            padding: 0 22px;
+            background: #8ab4f8;
+            color: #0f0f12;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #sendBtn:disabled { background: #444; color: #888; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Gemini Chatbot</h1>
+        <button id="clearBtn">Xóa hội thoại</button>
+    </header>
+
+    <div id="chat"></div>
+
+    <div id="inputBar">
+        <textarea id="input" rows="1" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)"></textarea>
+        <button id="sendBtn">Gửi</button>
+    </div>
+
+    <script>
+        // ===== CẤU HÌNH =====
+        // Khóa API bạn cung cấp (dạng AQ.* là khóa Google AI Studio mới)
+        const API_KEY = 'AQ.Ab8RN6LZnwCV23wmQbf2BawHK9ufVK5mHseIbcq9wCZ5zN-Lng';
+
+        // Endpoint đúng của Gemini API (KHÔNG phải googleapis.com)
+        // Model: gemini-2.0-flash — đổi nếu cần
+        const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+        // Chỉ thị hệ thống cho bot
+        const SYSTEM_INSTRUCTION = 'Bạn là trợ lý AI hữu ích, trả lời ngắn gọn, chính xác bằng tiếng Việt.';
+
+        // ===== TRẠNG THÁI =====
+        // chatHistory lưu lịch sử theo đúng định dạng contents của Gemini
+        let chatHistory = [];
+
+        // ===== THAM CHIẾU DOM =====
+        const chatEl  = document.getElementById('chat');
+        const inputEl = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        // ===== TIỆN ÍCH HIỂN THỊ =====
+        function addMessage(text, role) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + role;
+            div.textContent = text;
+            chatEl.appendChild(div);
+            chatEl.scrollTop = chatEl.scrollHeight;
+            return div;
+        }
+
+        function addTyping() {
+            const div = document.createElement('div');
+            div.className = 'msg bot typing';
+            div.textContent = 'Đang trả lời...';
+            chatEl.appendChild(div);
+            chatEl.scrollTop = chatEl.scrollHeight;
+            return div;
+        }
+
+        // ===== GỌI API =====
+        async function sendToGemini(userText) {
+            // Thêm tin nhắn người dùng vào lịch sử (định dạng Gemini: role + parts)
+            chatHistory.push({
+                role: 'user',
+                parts: [{ text: userText }]
+            });
+
+            // Body theo đúng schema generateContent
+            const body = {
+                system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+                contents: chatHistory
+            };
+
+            const res = await fetch(ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Khóa API gửi qua header x-goog-api-key (đúng như mẫu bạn đưa)
+                    'x-goog-api-key': API_KEY
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                // Đọc lỗi thật từ API để debug
+                const errText = await res.text();
+                throw new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
+            }
+
+            const data = await res.json();
+
+            // Trích xuất text trả về an toàn
+            const candidate = data.candidates && data.candidates[0];
+            const parts = candidate && candidate.content && candidate.content.parts;
+            const reply = parts && parts.map(p => p.text || '').join('').trim();
+
+            if (!reply) {
+                throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
+            }
+
+            // Lưu phản hồi vào lịch sử để giữ ngữ cảnh
+            chatHistory.push({
+                role: 'model',
+                parts: [{ text: reply }]
+            });
+
+            return reply;
+        }
+
+        // ===== XỬ LÝ GỬI =====
+        async function handleSend() {
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            inputEl.value = '';
+            inputEl.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            addMessage(text, 'user');
+            const typingEl = addTyping();
+
+            try {
+                const reply = await sendToGemini(text);
+                typingEl.remove();
+                addMessage(reply, 'bot');
+            } catch (err) {
+                typingEl.remove();
+                addMessage('Lỗi: ' + err.message, 'error');
+                // Rollback tin nhắn user khỏi lịch sử để tránh hỏng ngữ cảnh
+                chatHistory.pop();
+            } finally {
+                sendBtn.disabled = false;
+                inputEl.focus();
+            }
+        }
+
+        // ===== SỰ KIỆN =====
+        sendBtn.addEventListener('click', handleSend);
+
+        inputEl.addEventListener('keydown', (e) => {
+            // Enter gửi, Shift+Enter xuống dòng
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        // Tự động giãn textarea theo nội dung
+        inputEl.addEventListener('input', () => {
+            inputEl.style.height = 'auto';
+            inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+        });
+
+        // Xóa hội thoại
+        clearBtn.addEventListener('click', () => {
+            chatHistory = [];
+            chatEl.innerHTML = '';
+            addMessage('Hội thoại đã được xóa. Bắt đầu cuộc trò chuyện mới.', 'bot');
+        });
+
+        // Tin nhắn chào mừng
+        addMessage('Xin chào! Tôi là chatbot Gemini. Hãy nhập câu hỏi.', 'bot');
+    </script>
+</body>
+</html>
