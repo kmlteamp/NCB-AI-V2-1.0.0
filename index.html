@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-<!-- Chatbot Gemini — đã thay API key mới.
-     Endpoint đúng: generativelanguage.googleapis.com -->
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -23,8 +21,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         header h1 { font-size: 16px; font-weight: 600; color: #8ab4f8; }
+        .header-controls { display: flex; gap: 10px; align-items: center; }
         #clearBtn {
             background: transparent;
             border: 1px solid #444;
@@ -33,6 +34,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 13px;
+            font-family: inherit;
         }
         #clearBtn:hover { border-color: #8ab4f8; color: #8ab4f8; }
 
@@ -48,10 +50,11 @@
             max-width: 80%;
             padding: 12px 16px;
             border-radius: 12px;
-            line-height: 1.5;
+            line-height: 1.6;
             font-size: 14px;
             white-space: pre-wrap;
             word-wrap: break-word;
+            position: relative;
         }
         .user {
             align-self: flex-end;
@@ -73,13 +76,42 @@
         }
         .typing { color: #888; font-style: italic; font-size: 13px; }
 
+        .speak-btn {
+            background: transparent;
+            border: 1px solid #3a3a44;
+            color: #8ab4f8;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .speak-btn:hover { background: #2a2a33; }
+
         #inputBar {
             display: flex;
             gap: 10px;
             padding: 14px 20px;
             background: #17171c;
             border-top: 1px solid #2a2a33;
+            align-items: flex-end;
         }
+        #moodSelect {
+            padding: 12px 10px;
+            background: #0f0f12;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e6e6e6;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            min-width: 110px;
+        }
+        #moodSelect:focus { border-color: #8ab4f8; }
         #input {
             flex: 1;
             padding: 12px 14px;
@@ -91,10 +123,13 @@
             font-family: inherit;
             resize: none;
             outline: none;
+            min-height: 44px;
+            max-height: 140px;
         }
         #input:focus { border-color: #8ab4f8; }
         #sendBtn {
             padding: 0 22px;
+            height: 44px;
             background: #8ab4f8;
             color: #0f0f12;
             border: none;
@@ -102,6 +137,7 @@
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
+            font-family: inherit;
         }
         #sendBtn:disabled { background: #444; color: #888; cursor: not-allowed; }
     </style>
@@ -109,26 +145,38 @@
 <body>
     <header>
         <h1>Gemini Chatbot</h1>
-        <button id="clearBtn">Xóa hội thoại</button>
+        <div class="header-controls">
+            <button id="clearBtn">Xóa hội thoại</button>
+        </div>
     </header>
 
     <div id="chat"></div>
 
     <div id="inputBar">
+        <select id="moodSelect" title="Chọn phong cách trả lời">
+            <option value="Mặc định">Mặc định</option>
+            <option value="Thân thiện">Thân thiện</option>
+            <option value="Chuyên nghiệp">Chuyên nghiệp</option>
+            <option value="Hài hước">Hài hước</option>
+            <option value="Ngắn gọn">Ngắn gọn</option>
+        </select>
         <textarea id="input" rows="1" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)"></textarea>
         <button id="sendBtn">Gửi</button>
     </div>
 
     <script>
         // ===== CẤU HÌNH =====
-        // Khóa API mới (dạng AQ.* — Google AI Studio key)
-        const API_KEY = 'AQ.AQ.Ab8RN6LUdZXZS-PmAOR_ecqQp2LbnaDP4HP1kMYmjTfkfGzQHg';
+        // API key mới, trim() để loại bỏ khoảng trắng thừa
+        const API_KEY = 'AQ.Ab8RN6LUdZXZS-PmAOR_ecqQp2LbnaDP4HP1kMYmjTfkfGzQHg'.trim();
 
-        // Endpoint đúng của Gemini API
-        const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+        // Endpoint chuẩn Gemini API
+        const API_HOST = 'https://generativelanguage.googleapis.com/v1beta';
 
-        // Chỉ thị hệ thống cho bot
-        const SYSTEM_INSTRUCTION = 'Bạn là trợ lý AI hữu ích, trả lời ngắn gọn, chính xác bằng tiếng Việt.';
+        // Danh sách model fallback khi gặp 404
+        const MODEL_FALLBACKS = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+
+        // Chỉ thị hệ thống mặc định
+        const BASE_SYSTEM_INSTRUCTION = 'Bạn là trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
 
         // ===== TRẠNG THÁI =====
         let chatHistory = [];
@@ -138,12 +186,24 @@
         const inputEl = document.getElementById('input');
         const sendBtn = document.getElementById('sendBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const moodSelect = document.getElementById('moodSelect');
 
-        // ===== HIỂN THỊ =====
-        function addMessage(text, role) {
+        // ===== HIỂN THỊ TIN NHẮN =====
+        function addMessage(text, role, allowSpeech = false) {
             const div = document.createElement('div');
             div.className = 'msg ' + role;
             div.textContent = text;
+
+            if (role === 'bot' && allowSpeech) {
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'speak-btn';
+                speakBtn.innerHTML = '🔊 Đọc';
+                speakBtn.title = 'Đọc tin nhắn này bằng tiếng Việt';
+                speakBtn.addEventListener('click', () => speakText(text));
+                div.appendChild(document.createElement('br'));
+                div.appendChild(speakBtn);
+            }
+
             chatEl.appendChild(div);
             chatEl.scrollTop = chatEl.scrollHeight;
             return div;
@@ -158,50 +218,94 @@
             return div;
         }
 
-        // ===== GỌI API =====
+        // ===== ĐỌC GIỌNG NÓI =====
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) {
+                alert('Trình duyệt của bạn không hỗ trợ đọc văn bản.');
+                return;
+            }
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'vi-VN';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const viVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi'));
+            if (viVoice) utterance.voice = viVoice;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ===== GỌI API VỚI FALLBACK =====
         async function sendToGemini(userText) {
             chatHistory.push({
                 role: 'user',
                 parts: [{ text: userText }]
             });
 
+            const mood = moodSelect.value;
+            let systemInstruction = BASE_SYSTEM_INSTRUCTION;
+            if (mood && mood !== 'Mặc định') {
+                systemInstruction += ` Hãy trả lời với phong cách ${mood.toLowerCase()}.`;
+            }
+
             const body = {
-                system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+                system_instruction: { parts: [{ text: systemInstruction }] },
                 contents: chatHistory
             };
 
-            const res = await fetch(ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': API_KEY
-                },
-                body: JSON.stringify(body)
-            });
+            let lastError = null;
 
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
+            for (const model of MODEL_FALLBACKS) {
+                const endpoint = `${API_HOST}/models/${model}:generateContent`;
+                try {
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-goog-api-key': API_KEY
+                        },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (res.status === 404) {
+                        console.warn(`Model ${model} không khả dụng (404), thử model tiếp theo...`);
+                        lastError = new Error(`Model ${model} không tìm thấy`);
+                        continue;
+                    }
+
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        throw new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
+                    }
+
+                    const data = await res.json();
+                    const candidate = data.candidates && data.candidates[0];
+                    const parts = candidate && candidate.content && candidate.content.parts;
+                    const reply = parts && parts.map(p => p.text || '').join('').trim();
+
+                    if (!reply) {
+                        throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
+                    }
+
+                    chatHistory.push({
+                        role: 'model',
+                        parts: [{ text: reply }]
+                    });
+
+                    return reply;
+
+                } catch (err) {
+                    lastError = err;
+                }
             }
 
-            const data = await res.json();
-            const candidate = data.candidates && data.candidates[0];
-            const parts = candidate && candidate.content && candidate.content.parts;
-            const reply = parts && parts.map(p => p.text || '').join('').trim();
-
-            if (!reply) {
-                throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
-            }
-
-            chatHistory.push({
-                role: 'model',
-                parts: [{ text: reply }]
-            });
-
-            return reply;
+            throw lastError || new Error('Tất cả các model đều thất bại.');
         }
 
-        // ===== GỬI =====
+        // ===== GỬI TIN NHẮN =====
         async function handleSend() {
             const text = inputEl.value.trim();
             if (!text) return;
@@ -216,7 +320,7 @@
             try {
                 const reply = await sendToGemini(text);
                 typingEl.remove();
-                addMessage(reply, 'bot');
+                addMessage(reply, 'bot', true);
             } catch (err) {
                 typingEl.remove();
                 addMessage('Lỗi: ' + err.message, 'error');
@@ -248,7 +352,11 @@
             addMessage('Hội thoại đã được xóa. Bắt đầu cuộc trò chuyện mới.', 'bot');
         });
 
-        addMessage('Xin chào! Tôi là chatbot Gemini. Hãy nhập câu hỏi.', 'bot');
+        // ===== KHỞI TẠO =====
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+        }
+        addMessage('Xin chào! Tôi là chatbot Gemini. Hãy nhập câu hỏi.', 'bot', true);
     </script>
 </body>
 </html>
