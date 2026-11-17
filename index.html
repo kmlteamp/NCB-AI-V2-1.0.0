@@ -1,425 +1,341 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PBĐ AI</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-            background: #0f0f12;
-            color: #e6e6e6;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            padding: 14px 20px;
-            background: #17171c;
-            border-bottom: 1px solid #2a2a33;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        header h1 { font-size: 16px; font-weight: 600; color: #f55036; }
-        .header-controls { display: flex; gap: 10px; align-items: center; }
-        #clearBtn {
-            background: transparent;
-            border: 1px solid #444;
-            color: #bbb;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-family: inherit;
-        }
-        #clearBtn:hover { border-color: #f55036; color: #f55036; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NCB AI_SOS 1.0</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #0f0f12; color: #e6e6e6;
+    height: 100vh; display: flex; flex-direction: column;
+  }
 
-        #chat {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .msg {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            line-height: 1.6;
-            font-size: 14px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            position: relative;
-        }
-        .user {
-            align-self: flex-end;
-            background: #1f3a5f;
-            color: #dbeafe;
-            border-bottom-right-radius: 3px;
-        }
-        .bot {
-            align-self: flex-start;
-            background: #1e1e26;
-            color: #e6e6e6;
-            border-bottom-left-radius: 3px;
-        }
-        .error {
-            align-self: flex-start;
-            background: #3a1f1f;
-            color: #ff9b9b;
-            border-bottom-left-radius: 3px;
-        }
-        .typing { color: #888; font-style: italic; font-size: 13px; }
+  /* ===== MÀN HÌNH PIN ===== */
+  #pinGate {
+    position: fixed; inset: 0; background: #0f0f12;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px; text-align: center;
+  }
+  #pinGate h2 { font-size: 20px; color: #f55036; margin-bottom: 8px; }
+  #pinGate p { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; max-width: 340px; }
+  #pinInput {
+    width: 220px; text-align: center; font-size: 28px; letter-spacing: 12px;
+    padding: 12px; background: #17171c; border: 1px solid #333;
+    border-radius: 8px; color: #e6e6e6; outline: none; font-family: monospace;
+  }
+  #pinInput:focus { border-color: #f55036; }
+  #pinBtn {
+    margin-top: 16px; padding: 12px 32px; background: #f55036; color: #fff;
+    border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
+  }
+  #pinBtn:hover { background: #d63e26; }
+  #pinMsg { margin-top: 14px; font-size: 13px; min-height: 20px; color: #ff9b9b; }
 
-        .speak-btn {
-            background: transparent;
-            border: 1px solid #3a3a44;
-            color: #f55036;
-            border-radius: 4px;
-            padding: 3px 8px;
-            font-size: 11px;
-            cursor: pointer;
-            margin-top: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .speak-btn:hover { background: #2a2a33; }
+  /* ===== HEADER ===== */
+  header {
+    padding: 12px 20px; background: #17171c;
+    border-bottom: 1px solid #2a2a33;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand h1 { font-size: 16px; font-weight: 700; color: #f55036; letter-spacing: 0.5px; }
+  .brand span { font-size: 11px; color: #777; }
+  .brand span a { color: #8ab4f8; text-decoration: none; }
+  .brand span a:hover { text-decoration: underline; }
+  .header-controls { display: flex; gap: 8px; align-items: center; }
+  .hbtn {
+    background: transparent; border: 1px solid #444; color: #bbb;
+    padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-family: inherit;
+  }
+  .hbtn:hover { border-color: #f55036; color: #f55036; }
 
-        #inputBar {
-            display: flex;
-            gap: 10px;
-            padding: 14px 20px;
-            background: #17171c;
-            border-top: 1px solid #2a2a33;
-            align-items: flex-end;
-        }
-        #moodSelect {
-            padding: 12px 10px;
-            background: #0f0f12;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #e6e6e6;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            cursor: pointer;
-            min-width: 110px;
-        }
-        #moodSelect:focus { border-color: #f55036; }
-        #input {
-            flex: 1;
-            padding: 12px 14px;
-            background: #0f0f12;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #e6e6e6;
-            font-size: 14px;
-            font-family: inherit;
-            resize: none;
-            outline: none;
-            min-height: 44px;
-            max-height: 140px;
-        }
-        #input:focus { border-color: #f55036; }
-        #sendBtn {
-            padding: 0 22px;
-            height: 44px;
-            background: #f55036;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        #sendBtn:disabled { background: #444; color: #888; cursor: not-allowed; }
-    </style>
+  /* ===== CHAT ===== */
+  #chat {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .msg {
+    max-width: 80%; padding: 12px 16px; border-radius: 12px;
+    line-height: 1.6; font-size: 14px; white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .user { align-self: flex-end; background: #1f3a5f; color: #dbeafe; border-bottom-right-radius: 3px; }
+  .bot  { align-self: flex-start; background: #1e1e26; border-bottom-left-radius: 3px; }
+  .error { align-self: flex-start; background: #3a1f1f; color: #ff9b9b; border-bottom-left-radius: 3px; }
+  .typing { color: #888; font-style: italic; font-size: 13px; }
+  .speak-btn {
+    background: transparent; border: 1px solid #3a3a44; color: #f55036;
+    border-radius: 4px; padding: 3px 8px; font-size: 11px;
+    cursor: pointer; margin-top: 8px;
+  }
+  .speak-btn:hover { background: #2a2a33; }
+
+  /* ===== INPUT BAR ===== */
+  #inputBar {
+    display: flex; gap: 10px; padding: 14px 20px;
+    background: #17171c; border-top: 1px solid #2a2a33;
+    align-items: flex-end;
+  }
+  #moodSelect {
+    padding: 12px 10px; background: #0f0f12; border: 1px solid #333;
+    border-radius: 8px; color: #e6e6e6; font-size: 14px;
+    outline: none; cursor: pointer; min-width: 110px; font-family: inherit;
+  }
+  #moodSelect:focus { border-color: #f55036; }
+  #input {
+    flex: 1; padding: 12px 14px; background: #0f0f12;
+    border: 1px solid #333; border-radius: 8px; color: #e6e6e6;
+    font-size: 14px; font-family: inherit; resize: none; outline: none;
+    min-height: 44px; max-height: 140px;
+  }
+  #input:focus { border-color: #f55036; }
+  #sendBtn {
+    padding: 0 22px; height: 44px; background: #f55036; color: #fff;
+    border: none; border-radius: 8px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  #sendBtn:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+  footer {
+    padding: 8px 20px; text-align: center; font-size: 11px;
+    color: #555; background: #0f0f12; border-top: 1px solid #1e1e26;
+  }
+  footer a { color: #8ab4f8; text-decoration: none; }
+</style>
 </head>
 <body>
-    <header>
-        <h1>PBĐ AI</h1>
-        <div class="header-controls">
-            <button id="clearBtn">Xóa hội thoại</button>
-        </div>
-    </header>
 
-    <div id="chat"></div>
+<!-- ===== MÀN HÌNH PIN ===== -->
+<div id="pinGate">
+  <h2>NCB AI_SOS 1.0</h2>
+  <p>Nhập mã PIN 6 chữ số để bảo vệ cuộc trò chuyện.<br>
+     Lần đầu: nhập 6 số để đặt PIN.<br>
+     Lần sau: nhập đúng PIN để khôi phục trò chuyện.</p>
+  <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Nhập PIN...">
+  <button id="pinBtn">Tiếp tục</button>
+  <div id="pinMsg"></div>
+</div>
 
-    <div id="inputBar">
-        <select id="moodSelect" title="Chọn phong cách trả lời">
-            <option value="Mặc định">Mặc định</option>
-            <option value="Thân thiện">Thân thiện</option>
-            <option value="Chuyên nghiệp">Chuyên nghiệp</option>
-            <option value="Hài hước">Hài hước</option>
-            <option value="Ngắn gọn">Ngắn gọn</option>
-        </select>
-        <textarea id="input" rows="1" placeholder="Nhập tin nhắn... (Enter để gửi, Shift+Enter xuống dòng)"></textarea>
-        <button id="sendBtn">Gửi</button>
-    </div>
+<!-- ===== GIAO DIỆN CHÍNH ===== -->
+<header>
+  <div class="brand">
+    <h1>NCB AI_SOS 1.0</h1>
+    <span>Admin: Nguyễn Công Bằng · <a href="https://ncb-ai.vercel.app/" target="_blank" rel="noopener">ncb-ai.vercel.app</a></span>
+  </div>
+  <div class="header-controls">
+    <button class="hbtn" id="changePinBtn">Đổi PIN</button>
+    <button class="hbtn" id="clearBtn">Xóa chat</button>
+  </div>
+</header>
 
-    <script>
-        // ===== CẤU HÌNH GROQ =====
-        const API_KEY = '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'.trim();
-        const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+<div id="chat"></div>
 
-        // Model chính: Llama 3.3 70B Versatile (ID chính xác trên Groq)
-        const PRIMARY_MODEL = 'llama-3.3-70b-versatile';
+<div id="inputBar">
+  <select id="moodSelect" title="Chọn phong cách trả lời">
+    <option value="Mặc định">Mặc định</option>
+    <option value="Thân thiện">Thân thiện</option>
+    <option value="Chuyên nghiệp">Chuyên nghiệp</option>
+    <option value="Hài hước">Hài hước</option>
+    <option value="Ngắn gọn">Ngắn gọn</option>
+  </select>
+  <textarea id="input" rows="1" placeholder="Nhập tin nhắn... (Enter gửi, Shift+Enter xuống dòng)"></textarea>
+  <button id="sendBtn">Gửi</button>
+</div>
 
-        // Danh sách dự phòng nếu model chính lỗi (model bị gỡ / quá tải)
-        const MODEL_FALLBACKS = [
-            PRIMARY_MODEL,
-            'llama-3.1-8b-instant',
-            'gemma2-9b-it'
-        ];
+<footer>NCB AI_SOS 1.0 · Admin Nguyễn Công Bằng · Hỗ trợ: <a href="https://ncb-ai.vercel.app/" target="_blank" rel="noopener">https://ncb-ai.vercel.app/</a></footer>
 
-        const BASE_SYSTEM = 'Bạn là PBĐ AI, trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
+<script>
+/* ================== CẤU HÌNH ================== */
+const API_KEY = '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'.trim();
+const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL   = 'llama-3.3-70b-versatile';
+const SYSTEM  = 'Bạn là NCB AI_SOS 1.0, trợ lý AI của anh Nguyễn Công Bằng (admin website https://ncb-ai.vercel.app/). Trả lời bằng tiếng Việt, ngắn gọn, chính xác, thân thiện. Nếu được hỏi về website, hãy giới thiệu NCB AI_SOS 1.0 và liên kết https://ncb-ai.vercel.app/.';
 
-        // ===== TRẠNG THÁI =====
-        let chatHistory = [];
-        let resolvedModel = null; // Ghi nhớ model đã hoạt động
+/* ================== PIN GATE ================== */
+const PIN_KEY = 'ncb_ai_pin';
+const CHAT_KEY = 'ncb_ai_chat';
+const pinGate = document.getElementById('pinGate');
+const pinInput = document.getElementById('pinInput');
+const pinBtn = document.getElementById('pinBtn');
+const pinMsg = document.getElementById('pinMsg');
 
-        // ===== DOM =====
-        const chatEl   = document.getElementById('chat');
-        const inputEl  = document.getElementById('input');
-        const sendBtn  = document.getElementById('sendBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const moodSelect = document.getElementById('moodSelect');
+function getStoredPin() {
+  return localStorage.getItem(PIN_KEY);
+}
+function setPinMsg(t, ok=false) {
+  pinMsg.textContent = t;
+  pinMsg.style.color = ok ? '#8ab4f8' : '#ff9b9b';
+}
+pinBtn.addEventListener('click', () => {
+  const v = pinInput.value.trim();
+  if (!/^\d{6}$/.test(v)) { setPinMsg('PIN phải gồm đúng 6 chữ số.'); return; }
+  const stored = getStoredPin();
+  if (!stored) {
+    localStorage.setItem(PIN_KEY, v);
+    setPinMsg('Đã đặt PIN thành công. Đang mở...', true);
+    setTimeout(openChat, 500);
+  } else {
+    if (v === stored) {
+      setPinMsg('PIN đúng. Đang mở...', true);
+      setTimeout(openChat, 300);
+    } else {
+      setPinMsg('PIN sai. Thử lại.');
+      pinInput.value = '';
+    }
+  }
+});
+pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') pinBtn.click(); });
 
-        // ===== HIỂN THỊ =====
-        function addMessage(text, role, allowSpeech = false) {
-            const div = document.createElement('div');
-            div.className = 'msg ' + role;
-            div.textContent = text;
+function openChat() {
+  pinGate.style.display = 'none';
+  loadChat();
+  inputEl.focus();
+}
 
-            if (role === 'bot' && allowSpeech) {
-                const speakBtn = document.createElement('button');
-                speakBtn.className = 'speak-btn';
-                speakBtn.innerHTML = '🔊 Đọc';
-                speakBtn.title = 'Đọc tin nhắn này bằng tiếng Việt';
-                speakBtn.addEventListener('click', () => speakText(text));
-                div.appendChild(document.createElement('br'));
-                div.appendChild(speakBtn);
-            }
+/* ================== CHAT ================== */
+const chatEl   = document.getElementById('chat');
+const inputEl  = document.getElementById('input');
+const sendBtn  = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+const changePinBtn = document.getElementById('changePinBtn');
+const moodSelect = document.getElementById('moodSelect');
 
-            chatEl.appendChild(div);
-            chatEl.scrollTop = chatEl.scrollHeight;
-            return div;
-        }
+let chatHistory = [];
 
-        function addTyping() {
-            const div = document.createElement('div');
-            div.className = 'msg bot typing';
-            div.textContent = 'PBĐ AI đang trả lời...';
-            chatEl.appendChild(div);
-            chatEl.scrollTop = chatEl.scrollHeight;
-            return div;
-        }
+function saveChat() {
+  try { localStorage.setItem(CHAT_KEY, JSON.stringify(chatHistory)); } catch {}
+}
+function loadChat() {
+  try {
+    const raw = localStorage.getItem(CHAT_KEY);
+    if (raw) {
+      chatHistory = JSON.parse(raw) || [];
+      chatHistory.forEach(m => addMsg(m.content, m.role === 'user' ? 'user' : 'bot', m.role === 'assistant'));
+      return;
+    }
+  } catch {}
+  addMsg('Xin chào! Tôi là NCB AI_SOS 1.0 — trợ lý AI của anh Nguyễn Công Bằng. Hãy nhập câu hỏi.', 'bot', true);
+}
 
-        // ===== ĐỌC GIỌNG NÓI =====
-        function speakText(text) {
-            if (!('speechSynthesis' in window)) {
-                alert('Trình duyệt của bạn không hỗ trợ đọc văn bản.');
-                return;
-            }
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'vi-VN';
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            const voices = window.speechSynthesis.getVoices();
-            const viVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi'));
-            if (viVoice) utterance.voice = viVoice;
-            window.speechSynthesis.speak(utterance);
-        }
+function addMsg(text, role, speech=false) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.textContent = text;
+  if (role === 'bot' && speech) {
+    const b = document.createElement('button');
+    b.className = 'speak-btn';
+    b.textContent = '🔊 Đọc';
+    b.onclick = () => speak(text);
+    d.appendChild(document.createElement('br'));
+    d.appendChild(b);
+  }
+  chatEl.appendChild(d);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return d;
+}
 
-        // ===== GỌI GROQ VỚI MỘT MODEL CỤ THỂ =====
-        async function callGroq(model, messages) {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: messages,
-                    temperature: 0.7,
-                    max_tokens: 4096 // Giới hạn output hợp lý, tránh tràn context
-                })
-            });
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'vi-VN';
+  const v = speechSynthesis.getVoices().find(x => x.lang.startsWith('vi'));
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
 
-            if (!res.ok) {
-                const errText = await res.text();
-                const err = new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
-                err.status = res.status;
-                throw err;
-            }
+async function send() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  sendBtn.disabled = true;
 
-            return res.json();
-        }
+  addMsg(text, 'user');
+  const typing = document.createElement('div');
+  typing.className = 'msg bot typing';
+  typing.textContent = 'NCB AI_SOS 1.0 đang trả lời...';
+  chatEl.appendChild(typing);
+  chatEl.scrollTop = chatEl.scrollHeight;
 
-        // ===== DÒ MODEL KHẢ DỤNG QUA GET /openai/v1/models =====
-        async function discoverModel() {
-            const res = await fetch('https://api.groq.com/openai/v1/models', {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${API_KEY}` }
-            });
+  chatHistory.push({ role: 'user', content: text });
+  saveChat();
 
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Không lấy được danh sách model (HTTP ${res.status}): ${errText.slice(0, 200)}`);
-            }
+  try {
+    const mood = moodSelect.value;
+    let systemPrompt = SYSTEM;
+    if (mood && mood !== 'Mặc định') systemPrompt += ` Hãy trả lời với phong cách ${mood.toLowerCase()}.`;
 
-            const data = await res.json();
-            const models = data.data || [];
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + API_KEY
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [{ role: 'system', content: systemPrompt }, ...chatHistory],
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    });
 
-            // Ưu tiên các model chat phổ biến còn hoạt động
-            const preferred = models.find(m =>
-                m.id.includes('llama-3.3-70b') ||
-                m.id.includes('llama-3.1-8b') ||
-                m.id.includes('gemma2') ||
-                m.id.includes('qwen')
-            );
+    const raw = await res.text();
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' → ' + raw.slice(0, 400));
 
-            if (!preferred && models.length === 0) {
-                throw new Error('Không có model nào khả dụng cho key này.');
-            }
+    let data;
+    try { data = JSON.parse(raw); } catch { throw new Error('Phản hồi không phải JSON: ' + raw.slice(0, 200)); }
 
-            return (preferred || models[0]).id;
-        }
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) throw new Error('Không có nội dung trả về.');
 
-        // ===== GỬI TIN NHẮN =====
-        async function sendToGroq(userText) {
-            chatHistory.push({ role: 'user', content: userText });
+    typing.remove();
+    chatHistory.push({ role: 'assistant', content: reply });
+    saveChat();
+    addMsg(reply, 'bot', true);
 
-            const mood = moodSelect.value;
-            let systemPrompt = BASE_SYSTEM;
-            if (mood && mood !== 'Mặc định') {
-                systemPrompt += ` Hãy trả lời với phong cách ${mood.toLowerCase()}.`;
-            }
+  } catch (e) {
+    typing.remove();
+    addMsg('Lỗi: ' + e.message, 'error');
+    chatHistory.pop();
+    saveChat();
+  } finally {
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
 
-            const messages = [
-                { role: 'system', content: systemPrompt },
-                ...chatHistory
-            ];
+sendBtn.onclick = send;
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+});
 
-            let lastError = null;
+clearBtn.onclick = () => {
+  if (!confirm('Xóa toàn bộ hội thoại?')) return;
+  chatHistory = [];
+  localStorage.removeItem(CHAT_KEY);
+  chatEl.innerHTML = '';
+  addMsg('Hội thoại đã được xóa. Bắt đầu cuộc trò chuyện mới.', 'bot');
+};
 
-            const modelsToTry = resolvedModel
-                ? [resolvedModel, ...MODEL_FALLBACKS.filter(m => m !== resolvedModel)]
-                : [...MODEL_FALLBACKS];
+changePinBtn.onclick = () => {
+  const oldPin = prompt('Nhập PIN hiện tại:');
+  if (oldPin !== getStoredPin()) { alert('PIN hiện tại không đúng.'); return; }
+  const newPin = prompt('Nhập PIN mới (6 chữ số):');
+  if (!/^\d{6}$/.test(newPin || '')) { alert('PIN mới phải gồm đúng 6 chữ số.'); return; }
+  localStorage.setItem(PIN_KEY, newPin);
+  alert('Đã đổi PIN thành công.');
+};
 
-            for (const model of modelsToTry) {
-                try {
-                    const data = await callGroq(model, messages);
-                    const reply = data.choices && data.choices[0] && data.choices[0].message
-                        ? data.choices[0].message.content.trim()
-                        : '';
-
-                    if (!reply) throw new Error('Phản hồi rỗng.');
-
-                    resolvedModel = model;
-                    chatHistory.push({ role: 'assistant', content: reply });
-                    return reply;
-
-                } catch (err) {
-                    lastError = err;
-                    // 400/404: model sai hoặc bị gỡ → thử model kế tiếp
-                    if (err.status === 400 || err.status === 404) {
-                        console.warn(`Model ${model} lỗi ${err.status}, thử model tiếp theo...`);
-                        continue;
-                    }
-                    // 401/403/429: lỗi auth/quota → dừng ngay
-                    if (err.status === 401 || err.status === 403) {
-                        throw err;
-                    }
-                }
-            }
-
-            // Tất cả model ưu tiên thất bại → dò model khả dụng
-            console.warn('Tất cả model ưu tiên thất bại, đang dò model...');
-            try {
-                const discovered = await discoverModel();
-                console.log(`Model phát hiện: ${discovered}`);
-
-                const data = await callGroq(discovered, messages);
-                const reply = data.choices && data.choices[0] && data.choices[0].message
-                    ? data.choices[0].message.content.trim()
-                    : '';
-
-                if (!reply) throw new Error('Phản hồi rỗng.');
-
-                resolvedModel = discovered;
-                chatHistory.push({ role: 'assistant', content: reply });
-                return reply;
-
-            } catch (discoverErr) {
-                lastError = discoverErr;
-            }
-
-            throw lastError || new Error('Tất cả model đều thất bại.');
-        }
-
-        // ===== XỬ LÝ GỬI =====
-        async function handleSend() {
-            const text = inputEl.value.trim();
-            if (!text) return;
-
-            inputEl.value = '';
-            inputEl.style.height = 'auto';
-            sendBtn.disabled = true;
-
-            addMessage(text, 'user');
-            const typingEl = addTyping();
-
-            try {
-                const reply = await sendToGroq(text);
-                typingEl.remove();
-                addMessage(reply, 'bot', true);
-            } catch (err) {
-                typingEl.remove();
-                addMessage('Lỗi: ' + err.message, 'error');
-                chatHistory.pop();
-            } finally {
-                sendBtn.disabled = false;
-                inputEl.focus();
-            }
-        }
-
-        // ===== SỰ KIỆN =====
-        sendBtn.addEventListener('click', handleSend);
-
-        inputEl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-            }
-        });
-
-        inputEl.addEventListener('input', () => {
-            inputEl.style.height = 'auto';
-            inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
-        });
-
-        clearBtn.addEventListener('click', () => {
-            chatHistory = [];
-            resolvedModel = null;
-            chatEl.innerHTML = '';
-            addMessage('Hội thoại đã được xóa. Bắt đầu cuộc trò chuyện mới.', 'bot');
-        });
-
-        // ===== KHỞI TẠO =====
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.getVoices();
-        }
-        addMessage('Xin chào! Tôi là PBĐ AI (Llama 3.3 70B). Hãy nhập câu hỏi.', 'bot', true);
-    </script>
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+</script>
 </body>
 </html>
