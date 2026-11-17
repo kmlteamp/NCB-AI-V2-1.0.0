@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Chatbot</title>
+    <title>PBĐ AI</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -144,7 +144,7 @@
 </head>
 <body>
     <header>
-        <h1>Gemini Chatbot</h1>
+        <h1>PBĐ AI</h1>
         <div class="header-controls">
             <button id="clearBtn">Xóa hội thoại</button>
         </div>
@@ -166,17 +166,10 @@
 
     <script>
         // ===== CẤU HÌNH =====
-        // API key mới, trim() để loại bỏ khoảng trắng thừa
-        const API_KEY = 'AQ.Ab8RN6LUdZXZS-PmAOR_ecqQp2LbnaDP4HP1kMYmjTfkfGzQHg'.trim();
-
-        // Endpoint chuẩn Gemini API
+        const API_KEY = 'AQ.Ab8RN6KP1ORt7EgzeoQjunf8f1gTii9-cThXUN-5Et1qrF66Ew'.trim();
         const API_HOST = 'https://generativelanguage.googleapis.com/v1beta';
-
-        // Danh sách model fallback khi gặp 404
         const MODEL_FALLBACKS = ['gemini-2.0-flash', 'gemini-1.5-flash'];
-
-        // Chỉ thị hệ thống mặc định
-        const BASE_SYSTEM_INSTRUCTION = 'Bạn là trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
+        const BASE_SYSTEM_INSTRUCTION = 'Bạn là PBĐ AI, trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
 
         // ===== TRẠNG THÁI =====
         let chatHistory = [];
@@ -188,7 +181,7 @@
         const clearBtn = document.getElementById('clearBtn');
         const moodSelect = document.getElementById('moodSelect');
 
-        // ===== HIỂN THỊ TIN NHẮN =====
+        // ===== HIỂN THỊ =====
         function addMessage(text, role, allowSpeech = false) {
             const div = document.createElement('div');
             div.className = 'msg ' + role;
@@ -212,7 +205,7 @@
         function addTyping() {
             const div = document.createElement('div');
             div.className = 'msg bot typing';
-            div.textContent = 'Đang trả lời...';
+            div.textContent = 'PBĐ AI đang trả lời...';
             chatEl.appendChild(div);
             chatEl.scrollTop = chatEl.scrollHeight;
             return div;
@@ -238,7 +231,7 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        // ===== GỌI API VỚI FALLBACK =====
+        // ===== GỌI API =====
         async function sendToGemini(userText) {
             chatHistory.push({
                 role: 'user',
@@ -305,7 +298,7 @@
             throw lastError || new Error('Tất cả các model đều thất bại.');
         }
 
-        // ===== GỬI TIN NHẮN =====
+        // ===== GỬI =====
         async function handleSend() {
             const text = inputEl.value.trim();
             if (!text) return;
@@ -356,7 +349,7 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.getVoices();
         }
-        addMessage('Xin chào! Tôi là chatbot Gemini. Hãy nhập câu hỏi.', 'bot', true);
+        addMessage('Xin chào! Tôi là PBĐ AI. Hãy nhập câu hỏi.', 'bot', true);
     </script>
 </body>
 </html>
