@@ -24,7 +24,7 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        header h1 { font-size: 16px; font-weight: 600; color: #8ab4f8; }
+        header h1 { font-size: 16px; font-weight: 600; color: #f55036; }
         .header-controls { display: flex; gap: 10px; align-items: center; }
         #clearBtn {
             background: transparent;
@@ -36,7 +36,7 @@
             font-size: 13px;
             font-family: inherit;
         }
-        #clearBtn:hover { border-color: #8ab4f8; color: #8ab4f8; }
+        #clearBtn:hover { border-color: #f55036; color: #f55036; }
 
         #chat {
             flex: 1;
@@ -79,7 +79,7 @@
         .speak-btn {
             background: transparent;
             border: 1px solid #3a3a44;
-            color: #8ab4f8;
+            color: #f55036;
             border-radius: 4px;
             padding: 3px 8px;
             font-size: 11px;
@@ -111,7 +111,7 @@
             cursor: pointer;
             min-width: 110px;
         }
-        #moodSelect:focus { border-color: #8ab4f8; }
+        #moodSelect:focus { border-color: #f55036; }
         #input {
             flex: 1;
             padding: 12px 14px;
@@ -126,12 +126,12 @@
             min-height: 44px;
             max-height: 140px;
         }
-        #input:focus { border-color: #8ab4f8; }
+        #input:focus { border-color: #f55036; }
         #sendBtn {
             padding: 0 22px;
             height: 44px;
-            background: #8ab4f8;
-            color: #0f0f12;
+            background: #f55036;
+            color: #fff;
             border: none;
             border-radius: 8px;
             font-weight: 600;
@@ -165,23 +165,25 @@
     </div>
 
     <script>
-        // ===== CẤU HÌNH =====
-        const API_KEY = 'AQ.Ab8RN6KP1ORt7EgzeoQjunf8f1gTii9-cThXUN-5Et1qrF66Ew'.trim();
-        const API_HOST = 'https://generativelanguage.googleapis.com/v1beta';
+        // ===== CẤU HÌNH GROQ =====
+        const API_KEY = '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'.trim();
+        const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-        // Danh sách model ưu tiên (đã cập nhật theo yêu cầu)
+        // Model chính: Llama 3.3 70B Versatile (ID chính xác trên Groq)
+        const PRIMARY_MODEL = 'llama-3.3-70b-versatile';
+
+        // Danh sách dự phòng nếu model chính lỗi (model bị gỡ / quá tải)
         const MODEL_FALLBACKS = [
-            'gemini-3.5-flash-lite',
-            'gemini-3.8-flash',
-            'gemini-2.5-flash-lite'
+            PRIMARY_MODEL,
+            'llama-3.1-8b-instant',
+            'gemma2-9b-it'
         ];
 
-        const BASE_SYSTEM_INSTRUCTION = 'Bạn là PBĐ AI, trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
+        const BASE_SYSTEM = 'Bạn là PBĐ AI, trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
 
         // ===== TRẠNG THÁI =====
         let chatHistory = [];
-        // Lưu model đã được resolve thành công để tái sử dụng, tránh dò lại mỗi lần gửi
-        let resolvedModel = null;
+        let resolvedModel = null; // Ghi nhớ model đã hoạt động
 
         // ===== DOM =====
         const chatEl   = document.getElementById('chat');
@@ -237,24 +239,21 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        // ===== GỌI GENERATE CONTENT VỚI MỘT MODEL CỤ THỂ =====
-        async function callGenerateContent(model, body) {
-            const endpoint = `${API_HOST}/models/${model}:generateContent`;
-            const res = await fetch(endpoint, {
+        // ===== GỌI GROQ VỚI MỘT MODEL CỤ THỂ =====
+        async function callGroq(model, messages) {
+            const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-goog-api-key': API_KEY
+                    'Authorization': `Bearer ${API_KEY}`
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 4096 // Giới hạn output hợp lý, tránh tràn context
+                })
             });
-
-            if (res.status === 404) {
-                const errText = await res.text();
-                const err = new Error(`HTTP 404: ${errText.slice(0, 200)}`);
-                err.status = 404;
-                throw err;
-            }
 
             if (!res.ok) {
                 const errText = await res.text();
@@ -266,124 +265,106 @@
             return res.json();
         }
 
-        // ===== DÒ MODEL KHẢ DỤNG QUA GET /v1beta/models =====
+        // ===== DÒ MODEL KHẢ DỤNG QUA GET /openai/v1/models =====
         async function discoverModel() {
-            const res = await fetch(`${API_HOST}/models`, {
+            const res = await fetch('https://api.groq.com/openai/v1/models', {
                 method: 'GET',
-                headers: { 'x-goog-api-key': API_KEY }
+                headers: { 'Authorization': `Bearer ${API_KEY}` }
             });
 
             if (!res.ok) {
                 const errText = await res.text();
-                throw new Error(`Không thể lấy danh sách model (HTTP ${res.status}): ${errText.slice(0, 200)}`);
+                throw new Error(`Không lấy được danh sách model (HTTP ${res.status}): ${errText.slice(0, 200)}`);
             }
 
             const data = await res.json();
-            const models = data.models || [];
+            const models = data.data || [];
 
-            // Tìm model đầu tiên hỗ trợ generateContent
-            const candidate = models.find(m => {
-                const methods = m.supportedGenerationMethods || m.supported_generation_methods || [];
-                return methods.includes('generateContent');
-            });
+            // Ưu tiên các model chat phổ biến còn hoạt động
+            const preferred = models.find(m =>
+                m.id.includes('llama-3.3-70b') ||
+                m.id.includes('llama-3.1-8b') ||
+                m.id.includes('gemma2') ||
+                m.id.includes('qwen')
+            );
 
-            if (!candidate) {
-                throw new Error('Không tìm thấy model nào hỗ trợ generateContent trong danh sách trả về.');
+            if (!preferred && models.length === 0) {
+                throw new Error('Không có model nào khả dụng cho key này.');
             }
 
-            // Tên model có thể có tiền tố "models/", cần bỏ đi khi gọi endpoint
-            return candidate.name.replace(/^models\//, '');
+            return (preferred || models[0]).id;
         }
 
-        // ===== GỬI TIN NHẮN TỚI GEMINI =====
-        async function sendToGemini(userText) {
-            // 1. Thêm tin nhắn user vào lịch sử
-            chatHistory.push({
-                role: 'user',
-                parts: [{ text: userText }]
-            });
+        // ===== GỬI TIN NHẮN =====
+        async function sendToGroq(userText) {
+            chatHistory.push({ role: 'user', content: userText });
 
-            // 2. Xây dựng system instruction dựa trên Mood
             const mood = moodSelect.value;
-            let systemInstruction = BASE_SYSTEM_INSTRUCTION;
+            let systemPrompt = BASE_SYSTEM;
             if (mood && mood !== 'Mặc định') {
-                systemInstruction += ` Hãy trả lời với phong cách ${mood.toLowerCase()}.`;
+                systemPrompt += ` Hãy trả lời với phong cách ${mood.toLowerCase()}.`;
             }
 
-            const body = {
-                system_instruction: { parts: [{ text: systemInstruction }] },
-                contents: chatHistory
-            };
+            const messages = [
+                { role: 'system', content: systemPrompt },
+                ...chatHistory
+            ];
 
             let lastError = null;
 
-            // 3. Nếu đã có model resolve thành công trước đó, thử lại model đó trước
             const modelsToTry = resolvedModel
                 ? [resolvedModel, ...MODEL_FALLBACKS.filter(m => m !== resolvedModel)]
                 : [...MODEL_FALLBACKS];
 
             for (const model of modelsToTry) {
                 try {
-                    const data = await callGenerateContent(model, body);
-                    const candidate = data.candidates && data.candidates[0];
-                    const parts = candidate && candidate.content && candidate.content.parts;
-                    const reply = parts && parts.map(p => p.text || '').join('').trim();
+                    const data = await callGroq(model, messages);
+                    const reply = data.choices && data.choices[0] && data.choices[0].message
+                        ? data.choices[0].message.content.trim()
+                        : '';
 
-                    if (!reply) {
-                        throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
-                    }
+                    if (!reply) throw new Error('Phản hồi rỗng.');
 
-                    // Lưu model thành công để tái sử dụng
                     resolvedModel = model;
-
-                    chatHistory.push({
-                        role: 'model',
-                        parts: [{ text: reply }]
-                    });
-
+                    chatHistory.push({ role: 'assistant', content: reply });
                     return reply;
 
                 } catch (err) {
                     lastError = err;
-                    // Nếu là lỗi 404, tiếp tục thử model kế tiếp trong danh sách
-                    if (err.status === 404) {
-                        console.warn(`Model ${model} trả 404, thử model tiếp theo...`);
+                    // 400/404: model sai hoặc bị gỡ → thử model kế tiếp
+                    if (err.status === 400 || err.status === 404) {
+                        console.warn(`Model ${model} lỗi ${err.status}, thử model tiếp theo...`);
                         continue;
                     }
-                    // Các lỗi khác (401, 403, 429, 500) vẫn tiếp tục thử model sau
-                    // để tăng khả năng thành công nếu lỗi chỉ mang tính tạm thời
+                    // 401/403/429: lỗi auth/quota → dừng ngay
+                    if (err.status === 401 || err.status === 403) {
+                        throw err;
+                    }
                 }
             }
 
-            // 4. Tất cả model ưu tiên đều thất bại → dò model khả dụng qua GET /models
-            console.warn('Tất cả model ưu tiên thất bại, đang dò model khả dụng...');
+            // Tất cả model ưu tiên thất bại → dò model khả dụng
+            console.warn('Tất cả model ưu tiên thất bại, đang dò model...');
             try {
                 const discovered = await discoverModel();
-                console.log(`Model được phát hiện: ${discovered}`);
+                console.log(`Model phát hiện: ${discovered}`);
 
-                const data = await callGenerateContent(discovered, body);
-                const candidate = data.candidates && data.candidates[0];
-                const parts = candidate && candidate.content && candidate.content.parts;
-                const reply = parts && parts.map(p => p.text || '').join('').trim();
+                const data = await callGroq(discovered, messages);
+                const reply = data.choices && data.choices[0] && data.choices[0].message
+                    ? data.choices[0].message.content.trim()
+                    : '';
 
-                if (!reply) {
-                    throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
-                }
+                if (!reply) throw new Error('Phản hồi rỗng.');
 
                 resolvedModel = discovered;
-
-                chatHistory.push({
-                    role: 'model',
-                    parts: [{ text: reply }]
-                });
-
+                chatHistory.push({ role: 'assistant', content: reply });
                 return reply;
 
             } catch (discoverErr) {
                 lastError = discoverErr;
             }
 
-            throw lastError || new Error('Tất cả các model và cơ chế dò model đều thất bại.');
+            throw lastError || new Error('Tất cả model đều thất bại.');
         }
 
         // ===== XỬ LÝ GỬI =====
@@ -399,7 +380,7 @@
             const typingEl = addTyping();
 
             try {
-                const reply = await sendToGemini(text);
+                const reply = await sendToGroq(text);
                 typingEl.remove();
                 addMessage(reply, 'bot', true);
             } catch (err) {
@@ -438,7 +419,7 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.getVoices();
         }
-        addMessage('Xin chào! Tôi là PBĐ AI. Hãy nhập câu hỏi.', 'bot', true);
+        addMessage('Xin chào! Tôi là PBĐ AI (Llama 3.3 70B). Hãy nhập câu hỏi.', 'bot', true);
     </script>
 </body>
 </html>
