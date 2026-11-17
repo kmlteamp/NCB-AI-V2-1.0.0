@@ -168,16 +168,25 @@
         // ===== CẤU HÌNH =====
         const API_KEY = 'AQ.Ab8RN6KP1ORt7EgzeoQjunf8f1gTii9-cThXUN-5Et1qrF66Ew'.trim();
         const API_HOST = 'https://generativelanguage.googleapis.com/v1beta';
-        const MODEL_FALLBACKS = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+
+        // Danh sách model ưu tiên (đã cập nhật theo yêu cầu)
+        const MODEL_FALLBACKS = [
+            'gemini-3.5-flash-lite',
+            'gemini-3.8-flash',
+            'gemini-2.5-flash-lite'
+        ];
+
         const BASE_SYSTEM_INSTRUCTION = 'Bạn là PBĐ AI, trợ lý AI hữu ích, trả lời bằng tiếng Việt.';
 
         // ===== TRẠNG THÁI =====
         let chatHistory = [];
+        // Lưu model đã được resolve thành công để tái sử dụng, tránh dò lại mỗi lần gửi
+        let resolvedModel = null;
 
         // ===== DOM =====
-        const chatEl  = document.getElementById('chat');
-        const inputEl = document.getElementById('input');
-        const sendBtn = document.getElementById('sendBtn');
+        const chatEl   = document.getElementById('chat');
+        const inputEl  = document.getElementById('input');
+        const sendBtn  = document.getElementById('sendBtn');
         const clearBtn = document.getElementById('clearBtn');
         const moodSelect = document.getElementById('moodSelect');
 
@@ -218,26 +227,83 @@
                 return;
             }
             window.speechSynthesis.cancel();
-
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'vi-VN';
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
-
             const voices = window.speechSynthesis.getVoices();
             const viVoice = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi'));
             if (viVoice) utterance.voice = viVoice;
-
             window.speechSynthesis.speak(utterance);
         }
 
-        // ===== GỌI API =====
+        // ===== GỌI GENERATE CONTENT VỚI MỘT MODEL CỤ THỂ =====
+        async function callGenerateContent(model, body) {
+            const endpoint = `${API_HOST}/models/${model}:generateContent`;
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': API_KEY
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (res.status === 404) {
+                const errText = await res.text();
+                const err = new Error(`HTTP 404: ${errText.slice(0, 200)}`);
+                err.status = 404;
+                throw err;
+            }
+
+            if (!res.ok) {
+                const errText = await res.text();
+                const err = new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
+                err.status = res.status;
+                throw err;
+            }
+
+            return res.json();
+        }
+
+        // ===== DÒ MODEL KHẢ DỤNG QUA GET /v1beta/models =====
+        async function discoverModel() {
+            const res = await fetch(`${API_HOST}/models`, {
+                method: 'GET',
+                headers: { 'x-goog-api-key': API_KEY }
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Không thể lấy danh sách model (HTTP ${res.status}): ${errText.slice(0, 200)}`);
+            }
+
+            const data = await res.json();
+            const models = data.models || [];
+
+            // Tìm model đầu tiên hỗ trợ generateContent
+            const candidate = models.find(m => {
+                const methods = m.supportedGenerationMethods || m.supported_generation_methods || [];
+                return methods.includes('generateContent');
+            });
+
+            if (!candidate) {
+                throw new Error('Không tìm thấy model nào hỗ trợ generateContent trong danh sách trả về.');
+            }
+
+            // Tên model có thể có tiền tố "models/", cần bỏ đi khi gọi endpoint
+            return candidate.name.replace(/^models\//, '');
+        }
+
+        // ===== GỬI TIN NHẮN TỚI GEMINI =====
         async function sendToGemini(userText) {
+            // 1. Thêm tin nhắn user vào lịch sử
             chatHistory.push({
                 role: 'user',
                 parts: [{ text: userText }]
             });
 
+            // 2. Xây dựng system instruction dựa trên Mood
             const mood = moodSelect.value;
             let systemInstruction = BASE_SYSTEM_INSTRUCTION;
             if (mood && mood !== 'Mặc định') {
@@ -251,30 +317,14 @@
 
             let lastError = null;
 
-            for (const model of MODEL_FALLBACKS) {
-                const endpoint = `${API_HOST}/models/${model}:generateContent`;
+            // 3. Nếu đã có model resolve thành công trước đó, thử lại model đó trước
+            const modelsToTry = resolvedModel
+                ? [resolvedModel, ...MODEL_FALLBACKS.filter(m => m !== resolvedModel)]
+                : [...MODEL_FALLBACKS];
+
+            for (const model of modelsToTry) {
                 try {
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-goog-api-key': API_KEY
-                        },
-                        body: JSON.stringify(body)
-                    });
-
-                    if (res.status === 404) {
-                        console.warn(`Model ${model} không khả dụng (404), thử model tiếp theo...`);
-                        lastError = new Error(`Model ${model} không tìm thấy`);
-                        continue;
-                    }
-
-                    if (!res.ok) {
-                        const errText = await res.text();
-                        throw new Error(`HTTP ${res.status}: ${errText.slice(0, 300)}`);
-                    }
-
-                    const data = await res.json();
+                    const data = await callGenerateContent(model, body);
                     const candidate = data.candidates && data.candidates[0];
                     const parts = candidate && candidate.content && candidate.content.parts;
                     const reply = parts && parts.map(p => p.text || '').join('').trim();
@@ -282,6 +332,9 @@
                     if (!reply) {
                         throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
                     }
+
+                    // Lưu model thành công để tái sử dụng
+                    resolvedModel = model;
 
                     chatHistory.push({
                         role: 'model',
@@ -292,13 +345,48 @@
 
                 } catch (err) {
                     lastError = err;
+                    // Nếu là lỗi 404, tiếp tục thử model kế tiếp trong danh sách
+                    if (err.status === 404) {
+                        console.warn(`Model ${model} trả 404, thử model tiếp theo...`);
+                        continue;
+                    }
+                    // Các lỗi khác (401, 403, 429, 500) vẫn tiếp tục thử model sau
+                    // để tăng khả năng thành công nếu lỗi chỉ mang tính tạm thời
                 }
             }
 
-            throw lastError || new Error('Tất cả các model đều thất bại.');
+            // 4. Tất cả model ưu tiên đều thất bại → dò model khả dụng qua GET /models
+            console.warn('Tất cả model ưu tiên thất bại, đang dò model khả dụng...');
+            try {
+                const discovered = await discoverModel();
+                console.log(`Model được phát hiện: ${discovered}`);
+
+                const data = await callGenerateContent(discovered, body);
+                const candidate = data.candidates && data.candidates[0];
+                const parts = candidate && candidate.content && candidate.content.parts;
+                const reply = parts && parts.map(p => p.text || '').join('').trim();
+
+                if (!reply) {
+                    throw new Error('Phản hồi rỗng hoặc bị chặn: ' + JSON.stringify(data).slice(0, 300));
+                }
+
+                resolvedModel = discovered;
+
+                chatHistory.push({
+                    role: 'model',
+                    parts: [{ text: reply }]
+                });
+
+                return reply;
+
+            } catch (discoverErr) {
+                lastError = discoverErr;
+            }
+
+            throw lastError || new Error('Tất cả các model và cơ chế dò model đều thất bại.');
         }
 
-        // ===== GỬI =====
+        // ===== XỬ LÝ GỬI =====
         async function handleSend() {
             const text = inputEl.value.trim();
             if (!text) return;
@@ -341,6 +429,7 @@
 
         clearBtn.addEventListener('click', () => {
             chatHistory = [];
+            resolvedModel = null;
             chatEl.innerHTML = '';
             addMessage('Hội thoại đã được xóa. Bắt đầu cuộc trò chuyện mới.', 'bot');
         });
